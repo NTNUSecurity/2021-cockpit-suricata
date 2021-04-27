@@ -3,8 +3,7 @@ const childProcess = require('child_process');
 
 const copy = require('copy-webpack-plugin');
 const extract = require('mini-css-extract-plugin');
-const TerserJSPlugin = require('terser-webpack-plugin');
-const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
 const CompressionPlugin = require('compression-webpack-plugin');
 const webpack = require('webpack');
 const CockpitPoPlugin = require('./src/lib/cockpit-po-plugin');
@@ -88,7 +87,7 @@ module.exports = {
 
   optimization: {
     minimize: production,
-    minimizer: [new TerserJSPlugin({}), new OptimizeCSSAssetsPlugin({})],
+    minimizer: [`...`, new CssMinimizerPlugin()],
   },
 
   module: {
