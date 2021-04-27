@@ -1,6 +1,6 @@
 # cockpit-suricata
 
-This is a bachelor project started by four student from NTNU.
+This is a bachelor project started by four students from NTNU.
 
 The objective of this project is to develop a module for Cockpit to further simplify the administration of Suricata IDS.
 
