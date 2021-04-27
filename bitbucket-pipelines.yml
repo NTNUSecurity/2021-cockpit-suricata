@@ -1,0 +1,12 @@
+image: node:buster
+pipelines:
+  pull-requests:
+    '**':
+      - step:
+          caches:
+            - node
+          script:
+            - echo "root:secretpassword" | chpasswd
+            - apt-get update && apt-get install -y sassc rpm
+            - make
+            - make install

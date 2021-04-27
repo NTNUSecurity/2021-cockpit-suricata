@@ -1,0 +1,43 @@
+span#modal-suricata-update-text {
+    white-space: pre-line;
+}
+
+#pf-modal-part-2{
+    display: flex;
+    flex-direction: column-reverse;
+}
+
+span#modal-suricata-update-text{
+     font-family:monospace
+}
+.pf-c-switch{
+    width: 50px;
+    float: left;
+}
+
+span.pf-c-table__text{
+    overflow:revert !important;
+}
+
+#output-spinner{
+  position: fixed;
+  z-index: 999;
+  overflow: show;
+  margin: auto;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  width: 50px;
+  height: 50px;
+}
+
+textarea {
+    width: -moz-available;
+    height: 450px;
+    white-space:pre;
+    overflow-wrap: normal;
+    overflow-x: scroll;
+    resize: vertical;
+}
+

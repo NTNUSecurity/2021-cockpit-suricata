@@ -1,0 +1,17 @@
+.service-active {
+    color:#00ff00;
+}
+
+.service-down {
+    color:#ff0000;
+}
+textarea#suricata-config-area {
+    width: -moz-available;
+    height: 450px;
+    white-space:pre;
+    overflow-wrap: normal;
+    overflow-x: scroll;
+    resize: vertical;
+}
+
+
