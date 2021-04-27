@@ -72,6 +72,7 @@ import ReactDOMServer from 'react-dom/server';
 
 import { getTextData } from './utils.jsx';
 
+window.process = {};
 const path = require('path');
 const _ = require('lodash');
 
