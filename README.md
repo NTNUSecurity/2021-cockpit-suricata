@@ -51,8 +51,8 @@ Make sure you have `npm` available (usually from your distribution package).
 These commands check out the source and build it into the `dist/` directory:
 
 ```
-git clone https://github.com/sigve-sudland/
-cd starter-kit
+git clone https://github.com/Sudland/cockpit-suricata
+cd cockpit-suricata
 make
 ```
 
@@ -66,11 +66,11 @@ automatically minified and compressed. Set `NODE_ENV=production` if you want to
 duplicate this behavior.
 
 For development, you usually want to run your module straight out of the git
-tree. To do that, link that to the location were `cockpit-bridge` looks for packages:
+tree. To do that, link that to the location where `cockpit-bridge` looks for packages:
 
 ```
 mkdir -p ~/.local/share/cockpit
-ln -s `pwd`/dist ~/.local/share/cockpit/starter-kit
+ln -s `pwd`/dist ~/.local/share/cockpit/suricata
 ```
 
 After changing the code and running `make` again, reload the Cockpit page in
@@ -88,7 +88,7 @@ or
 
 # Running eslint
 
-Cockpit Starter Kit uses [ESLint](https://eslint.org/) to automatically check
+Cockpit-suricata uses [ESLint](https://eslint.org/) to automatically check
 JavaScript code style in `.js` and `.jsx` files.
 
 The linter is executed within every build as a webpack preloader.
