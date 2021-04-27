@@ -103,18 +103,9 @@ Violations of some rules can be fixed automatically by:
 
 Rules configuration can be found in the `.eslintrc.json` file.
 
-# Automated maintenance
-
-It is important to keep your [NPM modules](./package.json) up to date, to keep
-up with security updates and bug fixes. This is done with the
-[npm-update bot script](https://github.com/cockpit-project/bots/blob/master/npm-update)
-which is run weekly or upon [manual request](https://github.com/cockpit-project/starter-kit/actions) through the
-[npm-update.yml](.github/workflows/npm-update.yml) [GitHub action](https://github.com/features/actions).
-
 # Further reading
 
 * The [Starter Kit announcement](http://cockpit-project.org/blog/cockpit-starter-kit.html)
-   blog post explains the rationale for this project.
 * [Cockpit Deployment and Developer documentation](http://cockpit-project.org/guide/latest/)
 * [Make your project easily discoverable](http://cockpit-project.org/blog/making-a-cockpit-application.html)
 
