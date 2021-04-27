@@ -23,6 +23,10 @@ The objective of this project is to develop a module for Cockpit to further simp
 | Sigve Sudland        | <https://www.linkedin.com/in/sigve-sudland>   | gitlab.com/Sudland          |
 | Sindre Morvik        |                                               |                             |
 
+## Limitations
+This module is working with the default suricata.yaml file, and does not (for now) work with features provided by suricata like redis, threading, etc...
+
+
 ## Known issues
 * Config tab is known to crash when editing values
 * Signatures tab have no error reporting when applying changes
