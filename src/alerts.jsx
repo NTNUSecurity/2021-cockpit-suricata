@@ -112,7 +112,7 @@ export class Alerts extends React.Component {
       ],
 
       columnsCount: [
-        { title: 'Term', transforms: [sortable] },
+        { title: 'Signatures', transforms: [sortable] },
         { title: 'Count', transforms: [sortable] },
       ],
       isNew: true,
@@ -192,17 +192,28 @@ export class Alerts extends React.Component {
 
   watchFile() {
     // Loads the content from eve.json (contains alerts) file.
+    //
+    //
+    //
+
     cockpit
-      .spawn(['tail', '-f', '--lines=+1', this.logFile], { superuser: 'try' })
-      .stream((content) => {
-        const { isNew, rows, rowsCount, nrOfAlerts } = this.state;
+      .file(this.logFile, { max_read_size: 1024 * 1024 * 1024, superuser: 'try' })
+      .read()
+      .then((content) => {
+        if (!content.includes('"event_type":"alert"')) return;
+        const { isNew, rows, nrOfAlerts } = this.state;
         const newRows = rows;
-        const newRowsCount = rowsCount;
+        const newRowsCount = [];
         const jsonArray = content.split('\n').filter((x) => x.includes('"event_type":"alert"'));
 
         if (!isNew) {
-          for (let i = newRows.length; i < jsonArray.length; i += 1) {
-            const entry = this.pushAlert(JSON.parse(jsonArray[i]));
+          for (let i = 0; i < jsonArray.length; i += 1) {
+            let entry;
+            try {
+              entry = this.pushAlert(JSON.parse(jsonArray[i]));
+            } catch {
+              console.log(jsonArray[i]);
+            }
             if (entry != null) newRows.unshift(entry);
           }
         } else {
@@ -229,7 +240,7 @@ export class Alerts extends React.Component {
           // Count alerts
 
           this.setState(
-            { nrOfAlerts: jsonArray.length, rows: newRows, rowsCount: newRowsCount },
+            { nrOfAlerts: newRows.length, rows: newRows, rowsCount: newRowsCount },
             () => {
               this.updateSort();
               this.updateSort(); // BUG needs to run updateSort() twice to avoid elements not being sorted correctly
@@ -237,6 +248,55 @@ export class Alerts extends React.Component {
           );
         }
       });
+    cockpit.spawn(['tail', '-f', this.logFile], { superuser: 'try' }).stream((content) => {
+      if (!content.includes('"event_type":"alert"')) return;
+      const { isNew, rows, nrOfAlerts } = this.state;
+      const newRows = rows;
+      const newRowsCount = [];
+      const jsonArray = content.split('\n').filter((x) => x.includes('"event_type":"alert"'));
+
+      if (!isNew) {
+        for (let i = 0; i < jsonArray.length; i += 1) {
+          let entry;
+          try {
+            entry = this.pushAlert(JSON.parse(jsonArray[i]));
+          } catch {
+            console.log(jsonArray[i]);
+          }
+          if (entry != null) newRows.unshift(entry);
+        }
+      } else {
+        jsonArray.forEach((el) => {
+          const elObj = JSON.parse(el);
+          if (elObj.event_type == 'alert') {
+            newRows.unshift(this.pushAlert(elObj));
+          }
+        });
+
+        this.setState({ isNew: false });
+      }
+      if (newRows.length != nrOfAlerts) {
+        // Update if theres new entries
+        /// Count alerts
+        const counts = {};
+        newRows.forEach((x) => {
+          counts[x[5]] = (counts[x[5]] || 0) + 1;
+        });
+
+        Object.keys(counts).forEach((x) => {
+          newRowsCount.push([x, counts[x]]);
+        });
+        // Count alerts
+
+        this.setState(
+          { nrOfAlerts: newRows.length, rows: newRows, rowsCount: newRowsCount },
+          () => {
+            this.updateSort();
+            this.updateSort(); // BUG needs to run updateSort() twice to avoid elements not being sorted correctly
+          },
+        );
+      }
+    });
   }
 
   render() {

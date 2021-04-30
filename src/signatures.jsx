@@ -321,7 +321,7 @@ export class Signatures extends React.Component {
       cockpit
         .spawn(['touch', `${surRulesPath}/${textInputValue1}`], { superuser: 'try' })
         .done(() => {
-          this.addAlert(0, 'success', <span>successfully created file: {textInputValue1}</span>);
+          this.addAlert(0, 'success', <span>Successfully created file: {textInputValue1}</span>);
         })
         .catch((error) => {
           this.addAlert(
@@ -345,7 +345,7 @@ export class Signatures extends React.Component {
         .file(`${surRulesPath}/${signatureFile}`, { superuser: 'try' })
         .replace(modalData)
         .done(() => {
-          this.addAlert(0, 'success', <span>successfully uploaded file: {signatureFile}</span>);
+          this.addAlert(0, 'success', <span>Successfully uploaded file: {signatureFile}</span>);
         })
         .fail((error) => {
           this.addAlert(
@@ -573,7 +573,7 @@ export class Signatures extends React.Component {
                               }}
                               variant="link"
                               style={{ display: 'inline' }}>
-                              Delete key
+                              Delete secret code
                             </Button>
                           </div>
                         </Tooltip>
@@ -723,7 +723,7 @@ export class Signatures extends React.Component {
     const vendors = (
       <>
         <Modal
-          title="Add source/vendor form"
+          title="Add custom vendor form"
           id="modal-box-suricata-form"
           variant={ModalVariant.small}
           isOpen={isModalOpen[1]}
@@ -759,7 +759,7 @@ export class Signatures extends React.Component {
             </Button>,
             <Button
               key="close"
-              variant="danger"
+              variant="secondary"
               onClick={() => {
                 this.handleModalToggle(1);
                 this.clearStates();

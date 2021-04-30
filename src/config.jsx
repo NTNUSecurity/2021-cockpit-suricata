@@ -74,6 +74,7 @@ import { getTextData } from './utils.jsx';
 
 window.process = {};
 const path = require('path');
+
 const _ = require('lodash');
 
 export class Config extends React.Component {
