@@ -667,6 +667,20 @@ export class Signatures extends React.Component {
       .done(() => {
         if (isApplying) this.addAlert(-1, 'success', 'Finished applying changes.');
         this.updateTable();
+      })
+      .catch((error) => {
+        this.addAlert(
+          -1,
+          'danger',
+          <>
+            <div>
+              <span>Failed applying changes.</span>
+            </div>
+            <div>
+              <span>Error: {error.message}</span>
+            </div>
+          </>,
+        );
       });
   }
 
@@ -769,7 +783,7 @@ export class Signatures extends React.Component {
           ]}>
           <Form>
             <FormSection>
-              <FormGroup label="Name of source" isRequired fieldId="simple-form-section-1-input">
+              <FormGroup label="Name of vendor" isRequired fieldId="simple-form-section-1-input">
                 {this.setupTextInput('simple-form-section-1-input', 1)}
               </FormGroup>
               <FormGroup

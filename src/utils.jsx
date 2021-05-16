@@ -34,6 +34,15 @@ export function getSuricataVersion() {
   });
 }
 
+export function getMyTableId(evt) {
+  let el = evt.target;
+  while (el.parentElement != undefined) {
+    el = el.parentElement;
+    if (el.tagName == 'TABLE') return el.id;
+  }
+  return null;
+}
+
 export function getTextData(_file) {
   return cockpit
     .file(_file, { max_read_size: 1024 * 1024 * 1024, superuser: 'try' })

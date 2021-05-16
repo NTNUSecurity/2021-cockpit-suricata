@@ -339,10 +339,6 @@ export class Logs extends React.Component {
 
     const dateFormat = (date) =>
       date.toLocaleDateString('en-US', { year: 'numeric', month: 'numeric', day: 'numeric' });
-    const toValidator = (date) =>
-      isValidDate(datePick[0].date) && date >= datePick[0].date
-        ? ''
-        : 'To date must be less than from date';
 
     // https://stackoverflow.com/questions/16637051/adding-space-between-numbers
     function numberWithSpaces(x) {
@@ -635,7 +631,6 @@ export class Logs extends React.Component {
                           onChange={onToChange}
                           isDisabled={showLiveStats}
                           rangeStart={datePick[0].date}
-                          validators={[toValidator]}
                           aria-label="End date"
                           placeholder="mm/dd/yyyy"
                           dateParse={dateParse}

@@ -34,7 +34,6 @@ import {
   Dropdown,
   DropdownItem,
   DropdownToggle,
-  ExpandableSection,
   Form,
   FormGroup,
   Modal,
@@ -70,7 +69,7 @@ import yaml from 'js-yaml';
 import React from 'react';
 import ReactDOMServer from 'react-dom/server';
 
-import { getTextData } from './utils.jsx';
+import { getMyTableId, getTextData } from './utils.jsx';
 
 window.process = {};
 const path = require('path');
@@ -130,22 +129,16 @@ export class Config extends React.Component {
           .replaceAll(',', '\n')
           .replaceAll('#', ''); */
         const disabledArrays = {};
-        /* content
-          .split('\n')
-          .filter((el) => /^#.*:/.test(el)) // Filter out non-commented text out
-          .filter((el) => !/ - .*:/.test(el)) // Clear examples
-          .filter((el) => /^.*: \[.*\]/.test(el)) // Clear arrays
-          .toString()
-          .replaceAll('],', ']\n')
-          .replaceAll('#', '')
-          .split('\n')
-          .filter((el) => el != '') // Remove empty arrays
-          .forEach((el) => {
-            const key = el.replace(/: \[.*\]/, '');
-            const arr = el.replace(/.*: \[/, '[');
-            // disabledArrays[key] = JSON.parse(arr);
-          });
-          */
+        /*
+          content
+            .split('\n')
+            .filter((el) => !/^.*:/.test(el)) // Filter out non-commented text out
+            .toString()
+            .replaceAll('#', '')
+            .replaceAll(',', '\n')
+            .split('\n')
+            .filter((el) => el != '');// Remove empty arrays
+            */
         let disabledYaml = '';
         disabledYaml = { ...disabledArrays, ...disabledYaml };
         let { surUptConf } = this.state;
@@ -193,7 +186,9 @@ export class Config extends React.Component {
     };
 
     this.handleChange = (_nil, event, el) => {
-      const id = typeof event == 'object' ? event.target.id : '';
+      // Workaround for fixing <Switch> bug mixing ids
+      const id =
+        typeof event == 'object' ? event.target.parentElement.parentElement.parentElement.id : '';
       let { isChecked } = this.state;
       this.setState(() => {
         if (typeof el != 'undefined') {
@@ -308,18 +303,9 @@ export class Config extends React.Component {
       );
     };
 
-    this.getMyTableId = (evt) => {
-      let el = evt.target;
-      while (el.parentElement != undefined) {
-        el = el.parentElement;
-        if (el.tagName == 'TABLE') return el.id;
-      }
-      return null;
-    };
-
     this.handleCellTextInputChange = (newValue, evt, rowIndex, cellIndex) => {
       const { rows } = this.state;
-      const id = this.getMyTableId(evt);
+      const id = getMyTableId(evt);
       const newRows = Array.from(rows[id]);
       newRows[rowIndex].cells[cellIndex].props.editableValue = newValue;
       if (typeof newRows[rowIndex].cells[cellIndex].props.value == 'undefined')
@@ -421,6 +407,9 @@ export class Config extends React.Component {
   }
 
   // Apply new elements when finished rendering
+
+  componentDidMount() {}
+
   componentDidUpdate() {
     this.setupRecursiveTrash(global.suricataYamlTablesColumns, []);
   }
@@ -511,7 +500,7 @@ export class Config extends React.Component {
     } = this.state;
     // Setup delete button for table that patternfly does not currently have
     this.updateEditableRows = (evt, type, _isEditable, rowIndex, validationErrors) => {
-      const id = this.getMyTableId(evt);
+      const id = getMyTableId(evt);
       const newRows = rows[id];
 
       if (validationErrors && Object.keys(validationErrors).length) {
@@ -532,7 +521,7 @@ export class Config extends React.Component {
     };
 
     this.updateEditableRowsnew = (evt, type, _isEditable, rowIndex, validationErrors) => {
-      const id = this.getMyTableId(evt);
+      const id = getMyTableId(evt);
 
       const newRows = _.get(rows, id);
 
@@ -639,7 +628,11 @@ export class Config extends React.Component {
                   <ToolbarItem>
                     <Button
                       isDisabled={!textInputValue[`${configDropSelect}-file-hasChanged`]}
-                      onClick={() => this.saveConfigFile(filePath, configDropSelect)}>
+                      onClick={() => {
+                        textInputValue[`${configDropSelect}-file-hasChanged`] = false;
+                        this.setState({ textInputValue });
+                        this.saveConfigFile(filePath, configDropSelect);
+                      }}>
                       Save changes
                     </Button>
                   </ToolbarItem>
@@ -728,16 +721,13 @@ export class Config extends React.Component {
     };
 
     this.setupSwitch = (id) => (
-      <span>
-        <Switch
-          id={id}
-          isChecked={typeof isChecked[id] !== 'undefined' ? isChecked[id].enable : false}
-          onChange={(_nil, e) => {
-            this.handleChange(undefined, e);
-            this.setState({ updateYamlChanges: true });
-          }}
-        />
-      </span>
+      <Switch
+        isChecked={typeof isChecked[id] !== 'undefined' ? isChecked[id].enable : false}
+        onChange={(_nil, e) => {
+          this.handleChange(undefined, e);
+          this.setState({ updateYamlChanges: true });
+        }}
+      />
     );
 
     this.directlySaveYamlFile = (filePath, id) => {
@@ -829,208 +819,136 @@ export class Config extends React.Component {
         });
     };
 
-    this.setupRecursiveObject = (label, id, objPath, tooltipText, content, indent) => {
-      const select = _.get(textInputValue, objPath);
-      if (_.get(textInputValue, objPath) != null)
-        if (typeof _.get(textInputValue, objPath) == 'object') {
-          Object.keys(_.get(textInputValue, objPath)).forEach((el) => {
-            const build = [];
-            const selectEl = _.get(textInputValue, [...objPath, el]);
-            if (typeof _.get(global.suricataYamlTables, objPath) == 'object') {
-              let chosen = [...objPath, el];
-              if (/^[0-9]*$/.test(el)) chosen = objPath;
-              if (el >= 1) return;
-              if (_.get(rows, chosen).length == 0)
-                Object.keys(_.get(textInputValue, chosen)).forEach((el2) => {
-                  if (/^[0-9]*$/.test(el2)) {
-                    if (typeof _.get(textInputValue, chosen)[el2] == 'object') {
-                      const buildArr = [];
-                      _.get(global.suricataYamlTablesColumns, chosen).forEach((el3) => {
-                        buildArr.push(_.get(textInputValue, [...chosen, el2, el3.toLowerCase()]));
-                      });
-                      _.get(rows, chosen).push(
-                        this.setupNewRow(buildArr, _.get(rows, chosen).length, chosen),
-                      );
-                    } else {
-                      _.get(rows, chosen).push(
-                        this.setupNewRow(
-                          _.get(textInputValue, [...objPath, el2]),
-                          _.get(rows, chosen).length,
-                          chosen,
-                        ),
-                      );
-                    }
-                  } else
-                    _.get(rows, chosen).push(
-                      this.setupNewRow([el2, selectEl[el2]], _.get(rows, chosen).length, [
-                        ...objPath,
-                        el,
-                      ]),
-                    );
-                });
-              if (!/^[0-9]*$/.test(el))
-                content.push(
-                  <div
-                    style={{
-                      'padding-left': `${indent}em`,
-                      'padding-top': '0.5em',
-                      'padding-bottom': '0.5em',
-                      fontWeight: 'bold',
-                    }}>
-                    {typeof _.get(global.suricataYamlTitles, chosen) != 'undefined'
-                      ? _.get(global.suricataYamlTitles, chosen)
-                      : el}
-                    :
-                  </div>,
+    // objPath = object key path
+    this.setupRecursiveObject = (obj, objPath, html) => {
+      if (html.length == 0) {
+        obj.forEach((key) => {
+          if (typeof textInputValue[key] == 'undefined') textInputValue[key] = '';
+          html.push(
+            <FormGroup
+              id={key}
+              label={key}
+              labelIcon={this.setupSwitch(key)}
+              style={{
+                fontWeight: 'bold',
+              }}>
+              {typeof _.get(textInputValue, [key]) != 'object' && (
+                <TextInput
+                  id={key}
+                  value={_.get(textInputValue, [key])}
+                  onChange={(nil, e) => {
+                    this.handleTextInputChange(nil, e, [key]);
+                    this.setState({ updateYamlChanges: true });
+                  }}
+                />
+              )}
+            </FormGroup>,
+          );
+          if (typeof _.get(textInputValue, [key]) == 'object')
+            this.setupRecursiveObject(_.get(textInputValue, key), [key], html);
+        });
+        return html;
+      }
+      const id = objPath.toString().replaceAll(',', '.');
+      const indent = objPath.length;
+
+      if (typeof obj == 'object' && obj) {
+        if (Array.isArray(_.get(global.suricataYamlTables, objPath))) {
+          if (_.get(rows, objPath).length == 0)
+            Object.keys(_.get(textInputValue, objPath)).forEach((key) => {
+              if (/^[0-9]*$/.test(key)) {
+                if (typeof _.get(textInputValue, objPath)[key] == 'object') {
+                  const buildArr = [];
+                  _.get(global.suricataYamlTablesColumns, objPath).forEach((key2) => {
+                    buildArr.push(_.get(textInputValue, [...objPath, key, key2.toLowerCase()]));
+                  });
+                  _.get(rows, objPath).push(
+                    this.setupNewRow(buildArr, _.get(rows, objPath).length, objPath),
+                  );
+                } else {
+                  _.get(rows, objPath).push(
+                    this.setupNewRow(
+                      _.get(textInputValue, [...objPath, key]),
+                      _.get(rows, objPath).length,
+                      objPath,
+                    ),
+                  );
+                }
+              } else
+                _.get(rows, objPath).push(
+                  this.setupNewRow(
+                    [key, _.get(textInputValue, objPath)[key]],
+                    _.get(rows, objPath).length,
+                    [objPath],
+                  ),
                 );
-              build.push(
-                <>
-                  <Table
-                    id={chosen.toString().replaceAll(',', '.')}
-                    onRowEdit={this.updateEditableRowsnew}
-                    aria-label="Editable Rows Table"
-                    variant={TableVariant.compact}
-                    cells={_.get(global.suricataYamlTablesColumns, chosen)}
-                    rows={_.get(rows, chosen)}>
-                    <TableHeader />
-                    <TableBody />
-                  </Table>
-                  <Button
-                    icon={<PlusIcon />}
-                    variant="none"
-                    className="pf-c-button pf-c-plain"
-                    onClick={() => {
-                      const emptyBlocks = [];
-                      _.times(_.get(global.suricataYamlTablesColumns, chosen).length, () =>
-                        emptyBlocks.push(''),
-                      );
-                      _.get(rows, chosen).push(
-                        this.setupNewRow(emptyBlocks, _.get(rows, chosen).length, chosen),
-                      );
-                      this.setState({ rows }, () => {
-                        this.addTrashToTable(chosen);
-                      });
-                    }}
-                  />
-                </>,
-              );
-            } else if (typeof _.get(textInputValue, [...objPath, el]) == 'object') {
-              if (!/^[0-9]*$/.test(el))
-                content.push(
-                  <div
-                    style={{
-                      'padding-left': `${indent}em`,
-                      'padding-top': '0.5em',
-                      'padding-bottom': '0.5em',
-                      fontWeight: 'bold',
-                    }}>
-                    {typeof _.get(global.suricataYamlTitles, [...objPath, el]) != 'undefined'
-                      ? _.get(global.suricataYamlTitles, [...objPath, el])
-                      : el}
-                    :
-                  </div>,
-                );
-              this.setupRecursiveObject(
-                label,
-                id,
-                [...objPath, el],
-                tooltipText,
-                content,
-                indent + 1,
-              );
-            } else if (!Array.isArray(select))
-              build.push(
-                <div>
-                  {el}:
-                  <TextInput
-                    id={id}
-                    isReadOnly={!isChecked[id].enable}
-                    value={_.get(textInputValue, [...objPath, el])}
-                    onChange={(nil, e) => {
-                      this.handleTextInputChange(nil, e, [...objPath, el]);
-                      this.setState({ updateYamlChanges: true });
-                    }}
-                  />
-                </div>,
-              );
-            else {
-              build.push(
-                <div
-                  style={{
-                    'padding-top': '0.2em',
-                    'padding-bottom': '0.2em',
-                  }}>
-                  <span>
-                    <Switch
-                      isChecked={
-                        typeof _.get(isChecked, [...objPath, el]) !== 'undefined'
-                          ? _.get(isChecked, [...objPath, el])
-                          : false
-                      }
-                      onChange={(_nil, _e) => {
-                        this.handleChange(undefined, undefined, [...objPath, el]);
-                        this.setState({ updateYamlChanges: true });
-                      }}
-                    />
-                  </span>
-                  {selectEl}
-                </div>,
-              );
-            }
-            content.push(
-              <PageSection
-                style={{
-                  'padding-left': `${indent + 1}em`,
-                  'padding-top': '0px',
-                  'padding-bottom': '0px',
-                }}>
-                {build}
-              </PageSection>,
-            );
-          });
-        } else if (typeof select == 'string')
-          content.push(
-            <div style={{}}>
-              <TextInput
+            });
+          html.push(
+            <div
+              style={{
+                'padding-left': `${indent}em`,
+              }}>
+              <Table
                 id={id}
-                isReadOnly={!isChecked[`${id}`].enable}
-                value={_.get(textInputValue, [...objPath])}
-                onChange={(nil, e) => {
-                  this.handleTextInputChange(nil, e, [...objPath]);
-                  this.setState({ updateYamlChanges: true });
+                onRowEdit={this.updateEditableRowsnew}
+                aria-label="Editable Rows Table"
+                variant={TableVariant.compact}
+                cells={_.get(global.suricataYamlTablesColumns, objPath)}
+                rows={_.get(rows, objPath)}>
+                <TableHeader />
+                <TableBody />
+              </Table>
+              <Button
+                icon={<PlusIcon />}
+                style={{ marginRight: 'auto' }}
+                variant="none"
+                className="pf-c-button pf-c-plain"
+                onClick={() => {
+                  const emptyBlocks = [];
+                  _.times(_.get(global.suricataYamlTablesColumns, objPath).length, () =>
+                    emptyBlocks.push(''),
+                  );
+                  _.get(rows, objPath).push(
+                    this.setupNewRow(emptyBlocks, _.get(rows, objPath).length, objPath),
+                  );
+                  this.setState({ rows }, () => {
+                    this.addTrashToTable(objPath);
+                  });
                 }}
               />
             </div>,
           );
-      if (content.length == 1)
-        // If obj only has one element
-        return (
-          <Tooltip content={<div>{tooltipText}</div>}>
-            <FormGroup
-              label={
-                typeof _.get(global.suricataYamlTablesTitles, label) != 'undefined'
-                  ? _.get(global.suricataYamlTablesTitles, label)
-                  : label
-              }
-              labelIcon={this.setupSwitch(id)}>
-              <PageSection>{content}</PageSection>
-            </FormGroup>
-          </Tooltip>
-        );
-      return (
-        <Tooltip content={<div>{tooltipText}</div>}>
-          <FormGroup label={label} labelIcon={this.setupSwitch(id)}>
-            <PageSection>
-              <ExpandableSection toggleTextExpanded="Show Less" toggleTextCollapsed="Show More">
-                {content}
-              </ExpandableSection>
-            </PageSection>
-          </FormGroup>
-        </Tooltip>
-      );
+        } else {
+          Object.keys(obj).forEach((key) => {
+            const name = /^-?\d+$/.test(key) ? obj[key] : key;
+            const newPath = [...objPath, key];
+            html.push(
+              <div
+                style={{
+                  'padding-left': `${indent}em`,
+                }}>
+                {name.toString()}:
+                {typeof _.get(textInputValue, newPath) != 'object' && (
+                  <TextInput
+                    id={id}
+                    value={_.get(textInputValue, newPath)}
+                    onChange={(nil, e) => {
+                      this.handleTextInputChange(nil, e, newPath);
+                      this.setState({ updateYamlChanges: true });
+                    }}
+                  />
+                )}
+              </div>,
+            );
+            if (typeof _.get(textInputValue, newPath) == 'object')
+              this.setupRecursiveObject(_.get(textInputValue, newPath), newPath, html);
+          });
+        }
+      }
+      return null;
     };
 
-    const suricataYaml = (
+    this.suricataYaml = () => (
       <>
         <PageSection variant={PageSectionVariants.light}>
           <Toolbar>
@@ -1071,14 +989,12 @@ export class Config extends React.Component {
             </ToolbarGroup>
           </Toolbar>
           <Form id="suricata-yaml-page">
-            {global.suricataYamlKeys.map((key) =>
-              this.setupRecursiveObject(key, key, [key], key, [], 0),
-            )}
+            {this.setupRecursiveObject(global.suricataYamlKeys, [], [])}
           </Form>
         </PageSection>
       </>
     );
-    const updateYaml = (
+    this.updateYaml = () => (
       <>
         <PageSection variant={PageSectionVariants.light}>
           <Toolbar>
@@ -1119,9 +1035,7 @@ export class Config extends React.Component {
             </ToolbarGroup>
           </Toolbar>
           <Form id="update-yaml-page">
-            {global.updateYamlKeys.map((key) =>
-              this.setupRecursiveObject(key, key, [key], key, [], 0),
-            )}
+            {this.setupRecursiveObject(global.updateYamlKeys, [], [])}
           </Form>
         </PageSection>
       </>
@@ -1130,9 +1044,9 @@ export class Config extends React.Component {
     this.renderSwitchTab = (item) => {
       switch (item) {
         case 0:
-          return suricataYaml;
+          return this.suricataYaml();
         case 1:
-          return updateYaml;
+          return this.updateYaml();
         case 2:
           return this.configTab();
         default:

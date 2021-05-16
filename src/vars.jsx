@@ -94,7 +94,7 @@ global.defaultUpdateYaml =
   '{"disable-conf":"/etc/suricata/disable.conf","enable-conf":"/etc/suricata/enable.conf","drop-conf":"/etc/suricata/drop.conf","modify-conf":"/etc/suricata/modify.conf","ignore":["*deleted.rules"],"sources":["https://rules.emergingthreats.net/open/suricata-%(__version__)s/emerging.rules.tar.gz","https://sslbl.abuse.ch/blacklist/sslblacklist.rules"],"local":["/etc/suricata/rules","/etc/suricata/rules/app-layer-events.rules","/etc/suricata/rules/*.rules"]}';
 
 // Some array objects are treated like literals strings in suricata
-global.fakeArray = ['napatech.streams', 'napatech.ports'];
+global.fakeArray = ['napatech.streams', 'napatech.ports', 'host-os-policy.windows'];
 
 global.suricataYamlToggleable = {
   pfring: ['bpf-filter', 'bypass', 'checksum-checks'],

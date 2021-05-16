@@ -48,6 +48,8 @@ import cockpit from 'cockpit';
 import * as moment from 'moment';
 import React from 'react';
 
+import { getMyTableId } from './utils.jsx';
+
 // IDEAS
 // Add some sort of animation or indication when new entry are put in
 // TODO Add setInterval to update all momentjs.fromNow() to current time
@@ -117,10 +119,9 @@ export class Alerts extends React.Component {
       ],
       isNew: true,
       nrOfAlerts: 0,
-      rows: [],
-      rowsCount: [],
+      rows: { 'signature-table': [], 'repeated-table': [] },
       showNr: 50,
-      sortBy: {},
+      sortBy: [],
     };
     this.eventEntries = [];
     this.counter = 0;
@@ -137,35 +138,45 @@ export class Alerts extends React.Component {
   componentWillUnmount() {}
 
   onSort(_event, index, direction) {
-    const { rows } = this.state;
+    const id = getMyTableId(_event);
+    const { rows, sortBy } = this.state;
+    if (typeof sortBy[id] == 'undefined') sortBy[id] = {};
     let sortedRows;
-    if (index === 0)
+    if (index === 0 && id == 'signature-table')
       // time == 0 is an object
-      sortedRows = rows.sort((a, b) =>
+      sortedRows = rows[id].sort((a, b) =>
         a[index].props.children[0].props.children < b[index].props.children[0].props.children
           ? -1
           : a[index].props.children[0].props.children > b[index].props.children[0].props.children
           ? 1
           : 0,
       );
-    else sortedRows = rows.sort((a, b) => (a[index] < b[index] ? -1 : a[index] > b[index] ? 1 : 0));
+    else
+      sortedRows = rows[id].sort((a, b) =>
+        a[index] < b[index] ? -1 : a[index] > b[index] ? 1 : 0,
+      );
+
+    sortBy[id] = { direction, index };
+    rows[id] = direction === SortByDirection.asc ? sortedRows : sortedRows.reverse();
     this.setState({
-      rows: direction === SortByDirection.asc ? sortedRows : sortedRows.reverse(),
-      sortBy: {
-        direction,
-        index,
-      },
+      rows,
+      sortBy,
     });
   }
 
-  updateSort() {
+  updateSort(id) {
     const { rows, sortBy } = this.state;
-    if (typeof sortBy.index == 'undefined') return;
+    if (typeof sortBy[id] == 'undefined') sortBy[id] = {};
+    if (typeof sortBy[id].index == 'undefined') return;
     const sortedRows = rows.sort((a, b) =>
-      a[sortBy.index] < b[sortBy.index] ? -1 : a[sortBy.index] > b[sortBy.index] ? 1 : 0,
+      a[sortBy[id].index] < b[sortBy[id].index]
+        ? -1
+        : a[sortBy[id].index] > b[sortBy[id].index]
+        ? 1
+        : 0,
     );
     this.setState({
-      rows: sortBy.direction !== 'asc' ? sortedRows.reverse() : sortedRows,
+      rows: sortBy[id].direction !== 'asc' ? sortedRows.reverse() : sortedRows,
     });
   }
 
@@ -202,7 +213,7 @@ export class Alerts extends React.Component {
       .then((content) => {
         if (!content.includes('"event_type":"alert"')) return;
         const { isNew, rows, nrOfAlerts } = this.state;
-        const newRows = rows;
+        const newRows = rows['signature-table'];
         const newRowsCount = [];
         const jsonArray = content.split('\n').filter((x) => x.includes('"event_type":"alert"'));
 
@@ -238,20 +249,20 @@ export class Alerts extends React.Component {
             newRowsCount.push([x, counts[x]]);
           });
           // Count alerts
+          rows['repeated-table'] = newRowsCount;
+          rows['signature-table'] = newRows;
 
-          this.setState(
-            { nrOfAlerts: newRows.length, rows: newRows, rowsCount: newRowsCount },
-            () => {
-              this.updateSort();
-              this.updateSort(); // BUG needs to run updateSort() twice to avoid elements not being sorted correctly
-            },
-          );
+          this.setState({ nrOfAlerts: newRows.length, rows }, () => {
+            this.updateSort('repeated-table');
+            this.updateSort('repeated-table');
+            // BUG needs to run updateSort() twice to avoid elements not being sorted correctly
+          });
         }
       });
     cockpit.spawn(['tail', '-f', this.logFile], { superuser: 'try' }).stream((content) => {
       if (!content.includes('"event_type":"alert"')) return;
       const { isNew, rows, nrOfAlerts } = this.state;
-      const newRows = rows;
+      const newRows = rows['signature-table'];
       const newRowsCount = [];
       const jsonArray = content.split('\n').filter((x) => x.includes('"event_type":"alert"'));
 
@@ -287,20 +298,19 @@ export class Alerts extends React.Component {
           newRowsCount.push([x, counts[x]]);
         });
         // Count alerts
+        rows['repeated-table'] = newRowsCount;
+        rows['signature-table'] = newRows;
 
-        this.setState(
-          { nrOfAlerts: newRows.length, rows: newRows, rowsCount: newRowsCount },
-          () => {
-            this.updateSort();
-            this.updateSort(); // BUG needs to run updateSort() twice to avoid elements not being sorted correctly
-          },
-        );
+        this.setState({ nrOfAlerts: newRows.length, rows }, () => {
+          this.updateSort('signature-table');
+          this.updateSort('signature-table'); // BUG needs to run updateSort() twice to avoid elements not being sorted correctly
+        });
       }
     });
   }
 
   render() {
-    const { nrOfAlerts, columns, rows, rowsCount, columnsCount, sortBy, showNr } = this.state;
+    const { nrOfAlerts, columns, rows, columnsCount, sortBy, showNr } = this.state;
 
     return (
       <>
@@ -312,16 +322,17 @@ export class Alerts extends React.Component {
             List of repeated alerts
             <CardBody>
               <Table
-                aria-label="Sortable Table"
-                sortBy={sortBy}
+                aria-label="List of repeated alert table"
+                id="repeated-table"
+                sortBy={sortBy['repeated-table']}
                 onSort={this.onSort}
                 cells={columnsCount}
-                rows={rowsCount.slice(0, showNr)}>
+                rows={rows['repeated-table'].slice(0, showNr)}>
                 <TableHeader />
                 <TableBody />
               </Table>
 
-              {rowsCount.length > showNr && (
+              {rows['repeated-table'].length > showNr && (
                 <EmptyState>
                   <Title size="lg" headingLevel="h4">
                     <Button onClick={() => this.setState({ showNr: showNr + 50 })}>
@@ -337,19 +348,20 @@ export class Alerts extends React.Component {
             Alerts
             <CardBody>
               <Table
-                aria-label="Sortable Table"
+                aria-label="List of signatures alert table"
                 size="sm"
-                sortBy={sortBy}
+                id="signature-table"
+                sortBy={sortBy['signature-table']}
                 onSort={this.onSort}
                 cells={columns}
-                rows={rows.slice(0, showNr)}>
+                rows={rows['signature-table'].slice(0, showNr)}>
                 <TableHeader />
                 <TableBody />
               </Table>
             </CardBody>
           </CardTitle>
         </Card>
-        {rows.length > showNr && (
+        {rows['signature-table'].length > showNr && (
           <EmptyState>
             <Title size="lg" headingLevel="h4">
               <Button onClick={() => this.setState({ showNr: showNr + 50 })}>
