@@ -16,12 +16,12 @@ The objective of this project is to develop a module for Cockpit to further simp
 
 ## Group
 
-| Group member         | LinkedIn                                      | GitHub                      |
-|----------------------|-----------------------------------------------|-----------------------------|
-| Anders Svarverud     |                                               | github.com/Anders-Svarverud |
-| Said-Emin Evmurzajev |                                               |                             |
-| Sigve Sudland        | <https://www.linkedin.com/in/sigve-sudland>   | gitlab.com/Sudland          |
-| Sindre Morvik        |                                               |                             |
+| Group member         | LinkedIn                                        | GitHub                      |
+|----------------------|-------------------------------------------------|-----------------------------|
+| Anders Svarverud     | <https://www.linkedin.com/in/anders-svarverud>  | github.com/Anders-Svarverud |
+| Said-Emin Evmurzajev |                                                 |                             |
+| Sigve Sudland        | <https://www.linkedin.com/in/sigve-sudland>     | gitlab.com/Sudland          |
+| Sindre Morvik        |                                                 |                             |
 
 ## Limitations
 This module is working with the default suricata.yaml file, and does not (for now) work with features provided by suricata like redis, threading, etc...
