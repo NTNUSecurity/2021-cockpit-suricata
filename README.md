@@ -113,3 +113,5 @@ Rules configuration can be found in the `.eslintrc.json` file.
 * [Cockpit Deployment and Developer documentation](http://cockpit-project.org/guide/latest/)
 * [Make your project easily discoverable](http://cockpit-project.org/blog/making-a-cockpit-application.html)
 
+# License
+Copyright (c) 2021, NTNU, Seksjon for Digital sikkerhet. Released under the GPL-2.0-or-later license.
